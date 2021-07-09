@@ -159,15 +159,14 @@ function updateSubscriptionOnServer(subscription) {
   // TODO: Send subscription to application server
 
   const subscriptionJson = document.querySelector('.js-subscription-json');
-  const subscriptionDetails =
-    document.querySelector('.js-subscription-details');
+  const subscriptionDetails = document.querySelector('.js-subscription-details');
 
   if (subscription) {
 
     // Save subscription
-    const response =  saveSubscription(subscription)
+    const response = saveSubscription(subscription)
     console.log(response.JSON);
-    
+
     subscriptionJson.textContent = JSON.stringify(subscription);
     subscriptionDetails.classList.remove('is-invisible');
   } else {
@@ -191,4 +190,13 @@ const saveSubscription = async subscription => {
 
   return response.json()
 }
+
+ // Listen to messages from service workers.
+navigator.serviceWorker.addEventListener('message', event => {
+  alert("message from notofcation")
+  console.log(event.data.msg, event.data.url);
+});
+
+
+
 

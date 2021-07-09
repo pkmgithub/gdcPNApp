@@ -21,27 +21,105 @@
 
 'use strict';
 
+var parentClientId ;
+
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
+});
+
+
+
+self.addEventListener('push', function (event) {
+  console.log('[Service Worker] Push Received.');
+  console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+
+  const data = event.data.json();
+  const title = data["title"];
+
+  const options = {
+    body: 'message from Backend',
+    icon: '/images/icon.png',
+    badge: '/images/badge.png',
+    vibrate: [100, 50, 100],
+  };
+  options.body = data["body"]
+
+  event.waitUntil(self.registration.showNotification(title, options));
+
+    // Send a message to the client.
+    parentClientId.postMessage({
+      msg: "Hey I just got a NOTIFCATIONO ALERT  from you!",
+      url:"seems to work"
+    });
+
+});
+
+
+
+
+
+/*
 self.addEventListener('push', function(event) {
-    console.log('[Service Worker] Push Received.');
-    console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
-  
-    const title = 'Push Codelab';
-    const options = {
-      body: 'Yay it works.',
-      icon: 'images/icon.png',
-      badge: 'images/badge.png'
-    };
-  
-    event.waitUntil(self.registration.showNotification(title, options));
-  });
+  event.waitUntil(
+    self.clients.matchAll().then(function(clientList) {
+      var focused = clientList.some(function(client) {
+        return client.focused;
+      });
+
+      var notificationMessage;
+      if (focused) {
+        notificationMessage = 'You\'re still here, thanks!';
+      } else if (clientList.length > 0) {
+        notificationMessage = 'You haven\'t closed the page, ' +
+                              'click here to focus it!';
+      } else {
+        notificationMessage = 'You have closed the page, ' +
+                              'click here to re-open it!';
+      }
+      return self.registration.showNotification('ServiceWorker Cookbook', {
+        body: notificationMessage,
+      });
+    })
+  );
+});
+*/
 
 
-  self.addEventListener('notificationclick', function(event) {
-    console.log('[Service Worker] Notification click Received.');
-  
-    event.notification.close();
-  
-    event.waitUntil(
-      clients.openWindow('https://developers.google.com/web/')
-    );
-  });
+self.addEventListener('notificationclick', function (event) {
+  console.log('[Service Worker] Notification click Received.');
+
+  event.notification.close();
+
+  event.waitUntil(
+    clients.openWindow('https://developers.google.com/web/')
+  );
+});
+
+self.addEventListener("message", function (event) {
+  event.source.postMessage("Responding to " + event.data);
+});
+
+self.addEventListener('fetch', event => {
+  event.waitUntil(async function() {
+    // Exit early if we don't have access to the client.
+    // Eg, if it's cross-origin.
+    if (!event.clientId) return;
+
+    // Get the client.
+    const client = await clients.get(event.clientId);
+    // Exit early if we don't get the client.
+    // Eg, if it closed.
+    if (!client) return;
+
+    parentClientId = client;
+
+    // Send a message to the client.
+    client.postMessage({
+      msg: "Hey I just got a fetch from you!",
+      url: event.request.url
+    });
+
+  }());
+});
+
